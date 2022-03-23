@@ -20,7 +20,7 @@ Además aprender a hacer reportes con el lenguaje Markdown
 
 # Contenidos
 
-## Dia 1  Mañana
+## Dia 1
 
 * Fundamentos de las Tecnologías de secuenciación de última generación
 * Repaso R/Bioconductor
