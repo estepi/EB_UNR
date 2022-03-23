@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Objetivos
 El objetivo de este curso es brindar los conocimientos  para el análisis de datos de RNA-Seq.  Se propone realizar análisis exploratorios de los datos y obtener como resultado final los genes que se consideran diferencialmente expresados en el experimento. 
+Además aprender a hacer reportes con el lenguaje Markdown 
 
 # Contenidos
 
