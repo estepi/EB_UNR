@@ -24,14 +24,14 @@ Además aprender a hacer reportes con el lenguaje Markdown
 
 * Fundamentos de las Tecnologías de secuenciación de última generación
 * Repaso R/Bioconductor
-* [Práctica R](dia2.html) 
-* [Práctica QC](dia3.html)
+* [Práctica R](pca1.html) 
+* [Práctica QC](pca2.html)
 
 ## Dia 2
 
-* [RNA-Seq](dia4_extended.html)
-* [RNA-Seq DESeq2](dia4_b.html)
-* Markdown
+* [RNA-Seq](pca3.html)
+* [RNA-Seq DESeq2](pca3b.html)
+* [Markdown] (pca4.html)
 
 
 
