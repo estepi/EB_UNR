@@ -122,6 +122,6 @@ En la [vignette](http://bioconductor.org/packages/release/bioc/vignettes/ShortRe
 
 ## Repaso
 
-Repetir el ejercicio con el **R2.fq.gz** y completar el [cuestionario](https://forms.gle/TCHaSbfaG4BrMik9A)
+Repetir el ejercicio con el **R2.fq.gz** y completar el [cuestionario](https://forms.gle/XbFiUAZMkVPWZsMw5)
     
 
