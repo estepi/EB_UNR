@@ -30,7 +30,7 @@ Además aprender a hacer reportes con el lenguaje Markdown
 * [Markdown](pca4.html)
 
 ## Dia 2
-
+* Introducción RNA-Seq
 * [Paquetes](pca3_install.html)
 * [RNA-Seq](pca3.html)
 * [RNA-Seq DESeq2](pca3b.html)

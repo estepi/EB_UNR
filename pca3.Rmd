@@ -1,5 +1,5 @@
 ---
-title: "Análisis e Interpretación de datos de RNA-Seq"
+title: "Análisis de datos de RNA-Seq"
 subtitle: "Especialización en Bioinformática - UNR"
 author: "Estefania Mancini"
 date: "29 de Marzo 2022"
@@ -7,8 +7,12 @@ output:
     html_document:
     toc: true # table of content true
     toc_depth: 3  # upto three depths of headings (specified by #, ## and ###)
-    number_sections: true  ## if you want number sections at each table header
     toc_float: true
+    code_folding: hide
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 6
+    number_sections: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -106,13 +110,15 @@ réplicas** biológicas cada una.
 
 Antes de empezar armamos un archivo *targets* o *mapping file* donde se detalla cada muestra a qué condición corresponde 
 
-```{r targets, echo=TRUE, eval=FALSE}
+```{r targets, echo=TRUE, eval=TRUE}
+setwd("~/Documents/BioApps/data/")
 targets <- read.table("targets.txt", header = T, row.names = 1)
 ```
 
 Ahora cargaremos la tabla de counts a nivel gen. Especificamos algunas opciones tales como cuál es la colunma que le da nombre a las filas _(row.names = 1)_, así como si los nombres de las columnas. Para saber sobre estas especificaciones puede consultar el help de *read.table*.
 
-```{r readt, echo=TRUE, eval=FALSE}
+```{r readt, echo=TRUE, eval=TRUE}
+setwd("~/Documents/BioApps/data/")
 counts <-
     read.table(
         "genes.hits.txt",
@@ -124,27 +130,42 @@ counts <-
 
 ¿Qué tipo de objeto es **counts**? ¿Qué dimensiones tiene? ¿Cómo luce?
 
-```{r descriptive, echo=TRUE, eval=FALSE}
+```{r descriptive, echo=TRUE, eval=TRUE}
 class(counts)
 dim(counts)
 head(counts)
+#knitr::kable(counts[1:5,1:5], format="pandoc", align='cccc')
 ```
 
 
 Cargamos al entorno el paquete de bioconductor con el que vamos a realizar nuestro primer análisis en busca de genes diferencialmente expresdos:
 
 
-```{r edgeR, echo=TRUE, eval=FALSE}
+```{r edgeR, echo=TRUE, eval=TRUE}
 library(edgeR)
 ```
 
 Para explorar un poco la tabla de datos, miremos algunas medidas resumen y la distribucion de los counts:
 
-```{r summary, echo=TRUE, eval=FALSE}
+```{r summary, echo=TRUE, eval=TRUE}
 summary(counts)
 plot(density(rowMeans(counts)))
 ```
 
+Podemos refinar un poco el gráfico:
+
+```{r summaryGgplot, echo=TRUE, eval=TRUE}
+library(ggplot2)
+dreads<-density(rowMeans(counts))
+rmeans<-data.frame(rMeans=rowMeans(counts))
+rmeans$color<-rep("gene", nrow(rmeans))
+
+ ggplot(rmeans, aes(x=rMeans, fill=color)) + 
+ geom_density()+
+  theme_classic()+
+  labs(title="Read density")
+```
+ 
 También podemos explorar usando boxplots de cada una de las muestras para ir conociendo nuestros datos:
 
 ```{r boxplots, echo=TRUE, eval=FALSE}
@@ -152,19 +173,32 @@ par(mfrow=c(2,4))
 apply(counts, 2, boxplot)
 ```
 
+
+Con un poco más de calidad:
+
+```{r boxplotsGG, echo=TRUE, eval=TRUE}
+library(reshape2) 
+ df<- melt(counts)
+ggplot(df, aes(x=variable, y=value, fill=variable)) + 
+  geom_boxplot()+
+  theme_classic()+
+  labs(title="Read distribution")
+```
+
+
 * ¿Cómo son nuestros datos?
 
 ## Filtros
 
 Es recomendable filtrar los datos para eliminar aquellas filas (genes) que hayan recibido 0 o pocas lecturas. Para ello, aplicamos una conversión a los counts crudos usando la función cpm, que simplemente divide las lecturas por el total de lecturas de su biblitoeca y multiplica por 1M. Es recomendable remover genes sin al menos 1 read por millon en N de las muestras (donde N será el tamaño del grupo con menor número de réplicas - acá ambos tienen 4). Para estos genes es muy difı́cil detectar expresión diferencial asi que no hay que tener miedo a removerlos.
 
-```{r filtros, echo=TRUE, eval=FALSE}
+```{r filtros, echo=TRUE, eval=TRUE}
 cpms<-cpm(counts)
 ```
 
 Armamos un nuevo objeto y sobre el realizamos el filtro:
 
-```{r keep, echo=TRUE, eval=FALSE}
+```{r keep, echo=TRUE, eval=TRUE}
 keep<-rowSums(cpms>1)>4
 ```
 
@@ -172,7 +206,7 @@ keep<-rowSums(cpms>1)>4
 
 Controlemos la dimensión de la matriz original y filtrada, una vez que subseteamos con el vector **keep**:
 
-```{r keep2, echo=TRUE, eval=FALSE}
+```{r keep2, echo=TRUE, eval=TRUE}
 dim(counts)
 countsf<-counts[keep,]
 dim(countsf)
@@ -180,7 +214,7 @@ dim(countsf)
 
 Repetimos las medidas resumen y gráficos exploratorios:
 
-```{r keep3, echo=TRUE, eval=FALSE}
+```{r keep3, echo=TRUE, eval=TRUE}
 summary(countsf)
 ```
 
@@ -188,28 +222,37 @@ Ahora si, tenemos la tabla de conteos filtrados. Para comenzar a trabajar creamo
 
 _Importante: Hay que chequear que el vector con las condiciones o grupo, coincida con nuestras muestras._
 
-```{r DGEList1, echo=TRUE, eval=FALSE}
+```{r DGEList1, echo=TRUE, eval=TRUE}
 d<-DGEList(counts=countsf, group=targets$condition)
+str(d)
 ```
 
 Exploremos el objeto. Es un objeto de tipo _lista_, pero propia de **edgeR**. Cada uno de los componentes en este caso se denomina slot. 
 
 ¿Qué información sobre nuestras muestras se ha incorporado en este objeto? 
-La cantidad de lecturas que son contadas por gen son proporcionales a su longitud y a su expresión. Si quisiéramos tener una medida de la expresión absoluta habrı́a que tener en cuenta la longitud. En este análisis estamos concentrados en evaluar las diferencias de expresión entre 2 condiciones. Sólo se tienen en cuenta factores técnicos que deben ser corregidos antes de llevar a cabo el análisis de expresión diferencial. 
 
-*El más influyente es el que se denomina profundidad de la corrida es corregido teniendo en cuenta el tamaño de la biblioteca. 
+## Estimación de los factores de normalización 
+
+* La cantidad de lecturas que son contadas por gen son proporcionales a su longitud y a su expresión. Si quisiéramos tener una medida de la expresión absoluta habrı́a que tener en cuenta la longitud. 
+
+* En este análisis estamos concentrados en evaluar las diferencias de expresión entre 2 condiciones. Sólo se tienen en cuenta factores técnicos que deben ser corregidos antes de llevar a cabo el análisis de expresión diferencial. 
+
+* El más influyente es el que se denomina profundidad de la corrida es corregido teniendo en cuenta el tamaño de la biblioteca. 
 
 * Otro factor que es importante es la çomposición de la biblioteca: hay genes muy expresados que consumen muchas lecturas causando que los demás genes menos expresados sean subsampleados. Sobre el objeto, calcularemos los factores de normalización. Volver a explorar el objeto original y observar qué cambios se produjeron.
 
-```{r calcNormF, echo=TRUE, eval=FALSE}
+```{r calcNormF, echo=TRUE, eval=TRUE}
 d<-calcNormFactors(d)
+d
 ```
 
 Se han agregado los factores de normalización que se usarán al momento de estimar la expresión diferencial. Los mismos son bastante cercanos a 1, lo que significa que las bibliotecas son bastante similares en cuanto al número de lecturas totales. 
 
-Exploramos la relación entre las réplicas en un gráfico de bajas dimensiones (tipo PCA)
+## Relación entre réplicas 
 
-```{r names, echo=TRUE, eval=FALSE}
+Tenemos una función para explorar las muestras con un gráfico de bajas dimensiones (tipo PCA)
+
+```{r names, echo=TRUE, eval=TRUE}
 shortNames<-paste(targets$condition, rep(1:4, 2), sep=".")
 targets<-cbind(targets,shortNames)
 
@@ -218,62 +261,133 @@ col=c("darkgreen","blue")[factor(targets$condition)])
 
 ```
 
-Esta función calculará las distancias euclı́deas entre cada para de muestras y representará en un gráfico de 2 dimensiones cómo es la relación entre las muestras. Podemos observar si en el experimento la separación entre condiciones es suficientemente robusta y cómo es la relación entre las réplicas. 
+* Esta función calculará las distancias euclı́deas entre cada para de muestras y representará en un gráfico de 2 dimensiones cómo es la relación entre las muestras. * Podemos observar si en el experimento la separación entre condiciones es suficientemente robusta y cómo es la relación entre las réplicas. 
 
-Ahora nos queda estimar la dispersión. Primero estimaremos la dispersión común a todas las bibliotecas:
+## Dispersión
 
-```{r names2, echo=TRUE, eval=FALSE}
+Primero estimaremos la dispersión común a todas las bibliotecas:
+
+```{r names2, echo=TRUE, eval=TRUE}
 d<-estimateCommonDisp(d, verbose=TRUE)
 ```
 
-En este caso la dispersión tiene 2 componentes: la técnica y la biológica. La biológica es la raı́z ccuadrada de la dispersión. Si analizamos como se comporta el Coeficiente de variación Biológica, vemos que es superior a la dispersión común a bajas concentraciones de lecturas. Esto hace que sea más apropiado, establecer una dispersión gen a gen y no utilizar la misma dispersión común para todos.
+* En este caso la dispersión tiene 2 componentes: la técnica y la biológica. La biológica es la raı́z cuadrada de la dispersión.
 
-Estimamos una dispersión _gen por gen_:
+* Si analizamos cómo se comporta el Coeficiente de variación Biológica, vemos que es superior a la dispersión común a bajas concentraciones de lecturas. Esto hace que sea más apropiado, establecer una dispersión gen a gen y no utilizar la misma dispersión común para todos.
 
-```{r disp, echo=TRUE, eval=FALSE}
+
+```{r disp, echo=TRUE, eval=TRUE}
 d<-estimateTagwiseDisp(d)
+d
 ```
 
 Y analizar la nube de puntos gráficamente, con la función **plotBCV**
 
-```{r plotBCV, echo=TRUE, eval=FALSE}
+```{r plotBCV, echo=TRUE, eval=TRUE}
 plotBCV(d)
 ```
 
+## Expresión diferencial
+
 Ya estamos en condiciones de testear la expresión diferencial. Para ello **edegR** tiene la función **exactTest**. La misma necesitará la dispersión que acabamos de calcular y el par que queremos comparar. Este es un test que se utiliza para evaluar diferencias entre pares, bajo una distribución binomial negativa. Como resultado del test, obtenemos los _pvalues_ para cada comparación. El resultado del test lo guardamos en un objeto nuevo **de**. 
 
-```{r exactTest, echo=TRUE, eval=FALSE}
+```{r exactTest, echo=TRUE, eval=TRUE}
 de<-exactTest(d, pair=c("CT","KD"))
+str(de)
+
 ```
 
-Con la función **topTags** se ordenarán los genes por su _pvalue_ corregido, y podemos extraer la cantidad que especifiquemos. Por fines prácticos, NO restringiremos a un número fijo los topTags sino que imprimimos todos los genes.
+¿Qué tenemos en el objeto **de**?
 
-```{r toptags, echo=TRUE, eval=FALSE}
-tt <- topTags(de, n=nrow(d))
+Con la función **topTags** se ordenarán los genes por su _pvalue_ corregido. Se muestran los top 10:
+
+```{r toptagsDefault, echo=TRUE, eval=TRUE}
+tt <- topTags(de)
+tt
 ```
 
-Podemos explorar rápidamente cómo se distribuyeron los pvalues:
+También odemos extraer la cantidad que especifiquemos, por ejemplo TODOS los genes. 
 
-```{r toptags2, echo=TRUE, eval=FALSE}
+```{r toptags, echo=TRUE, eval=TRUE}
+tt <- topTags(de, n = nrow(de))
+```
+
+_¿Cuál es el gen que está más afectado en este experimento? ¿Tiene lógica?_
+
+Podemos explorar rápidamente cómo se distribuyeron los _pvalues_:
+
+```{r toptags2, echo=TRUE, eval=TRUE}
 table(tt$table$FDR <0.05)
-hist(tt$table$FDR, breaks=100 )
+
+df <- data.frame(
+  exp="KD",
+  fdr=tt$table$FDR)
+# Change colors
+ggplot(df, aes(x=fdr)) + 
+geom_histogram(color="black", fill="white", binwidth=0.01)+
+geom_vline(xintercept=0.05, linetype="dashed")+
+theme_classic()+
+labs(title="FDR distribution")
+
 ```
+
+## MA plot
 
 Para visualizar cómo es la relación entre los genes, la tasa de cambio y la expresión podemos utilizar un gráfico de **logFC vs counts ** que ya habı̀amos utilizado, solo que en este caso vamos a marcar con otro color aquellos que tienen un pvalue corregido 0.1. Estos se denominarán **topTags**:
 
-```{r deg, echo=TRUE, eval=FALSE}
-deg<-rownames(tt)[tt$table$FDR <.1]
+```{r deg, echo=TRUE, eval=TRUE}
+deg<-rownames(tt)[tt$table$FDR <.05 &   
+                  abs(tt$table$logFC )>1 ]
 plotSmear(d, de.tags=deg)
 abline(h=c(-1,0,1))
+
 ```
 
-* En nuestro caso observamos el cociente entre cada uno de los genes y la media de expresion de cada gen (en cpm). ¿Qué observamos? Muchos genes se encuentran sobre la región central, significa que no han cambiado como era esperable. El corte de pvalue y logFC es arbitrario y dependerá del experimento que estemos analizando. 
+* En nuestro caso observamos el cociente entre cada uno de los genes y la media de expresion de cada gen (en cpm). 
+
+* ¿Qué observamos? Muchos genes se encuentran sobre la región central, significa que no han cambiado como era esperable. El corte de pvalue y logFC es arbitrario y dependerá del experimento que estemos analizando. 
 
 * Recordar que en el vector **deg** se han guardado los nombres de los genes que consideramos diferencialmente expresados con nuestro criterio. Para exportar los datos a un archivo en formato tabular, simplemente imprimo con el comando: 
 
+## VULCANO PLOT (el último esfuerzo)
+
+```{r degGGPLOT, echo=TRUE, eval=TRUE, warning=FALSE}
+y <-tt$table
+tt10 <- topTags(de, n=20)
+
+y$gene_color <- rep("grey", nrow(y))
+y$gene_color[y$logFC>1] <-"red"   
+y$gene_color[y$logFC< (-1)]<-"green"
+
+y$imp_genes<-NA
+
+ii <- match(rownames(tt10), rownames(y))
+y$imp_genes[ii]<-rownames(y)[ii]
+
+library(ggrepel)
+ggplot(y, aes(x=logFC, y=-log10(FDR))) +
+  geom_point(aes(col=gene_color), cex= 1.2) +
+  scale_color_manual(values=c("dark green","dark grey", "dark red")) +
+  labs(title="DEG", x="log2(FC)", y="-log10(FDR)") +
+  geom_vline(xintercept= c(-1, 1), colour= 'black', linetype= 'dashed') +
+  geom_hline(yintercept= 1.30103, colour= 'black', linetype= 'dashed') +
+  theme_minimal()+
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, face="italic", hjust=0.4),
+        axis.title.x = element_text(color = "black", size=12, hjust = 0.4),   
+        axis.title.y = element_text(size =12, hjust = 0.5)) +
+  geom_text_repel(data=y,
+                  aes(x=logFC, y=-log10(FDR)), 
+                  label =y$imp_genes,
+                  box.padding = unit(0.25, "lines"),
+                  hjust =1,
+                  max.overlaps = 50)
+```
+
+Exportamos los resultados en formato tabular, para futuros análisis:
 ```{r tt2, echo=TRUE, eval=FALSE}
 write.table() o write.csv():
-write.csv(tt$table, file="toptags_edgeR.csv")
+write.csv(tt$table, file="red_edgeR.csv")
 ```
 
 
