@@ -56,25 +56,19 @@ Cargamos el paquete al entorno de trabajo. Vamos a analizar la calidad del archi
 \texttt{qa}
 
 
-```{r ShortRead, echo=TRUE, eval=FALSE}
+```{r ShortRead, echo=TRUE, eval=TRUE, message=FALSE}
 library(ShortRead)
-setwd("../data/")
+setwd("~/Documents/UNR/clases/data/QC/")
 countFastq("R1.fq.gz")
 fqQC <-qa("R1.fq.gz")
 ```
 
-
-La lectura del archivo se guardará el objeto \texttt{fqQC}. Comprobamos qué tipo de objeto es y qué información nos brinda:
-
-```{r fqQC, echo=TRUE, eval=FALSE}
-fqQC
-```
-
+La lectura del archivo se guardará en el objeto \textbf{fqQC}. 
 El objeto que se generó ya contiene las métricas de calidad. Podemos imprimirlo en un reporte en formato HTML. 
 
 _TIP: Verificar que el directorio donde se exporta la salida._
 
-```{r report, echo=TRUE, eval=FALSE}
+```{r report, echo=TRUE, eval=TRUE}
 report(fqQC, type="html", dest="fastqQAreport-wt-short")
 ```
 
@@ -84,26 +78,26 @@ _TIP: Debajo de cada gráfico se especifican las funciones con las que se han re
 
 Podemos hacerlos uno por uno:
 
-```{r readCount, echo=TRUE, eval=FALSE}
+```{r readCount, echo=TRUE, eval=TRUE}
 ShortRead:::.plotReadCount(fqQC)
 ```
 
 Este primer gráfico no es muy informativo ya que aquı́ solo estamos analizando el total de lecturas, sin tener en cuenta si han sido filtradas o alineadas. Además estamos mirando 1 sola muestra y sola lane.
 
-```{r plot2, echo=TRUE, eval=FALSE}
+```{r plot2, echo=TRUE, eval=TRUE}
 ShortRead:::.plotNucleotideCount(fqQC)
 ```
 
 En este segundo gráfico, podemos ver la frecuencia de aparición de cada base. Este cálculo podemos hacerlo manualmente también usando uno de los comandos que se señalan arriba.
 
-```{r plot3, echo=TRUE, eval=FALSE}
+```{r plot3, echo=TRUE, eval=TRUE}
 df <- fqQC[["readQualityScore"]]
 ShortRead:::.plotReadQuality(df[df$type=="read",])
 ```
 
 En este caso observaremos la distribución de calidad en todo el archivo fastq. ¿Qué puede decir de la calidad de esta muestra? ¿Le resulta confiable para seguir trabajando?
 
-```{r plot4, echo=TRUE, eval=FALSE}
+```{r plot4, echo=TRUE, eval=TRUE}
 df <- fqQC[["sequenceDistribution"]]
 ShortRead:::.plotReadOccurrences(df[df$type=="read",], cex=.5)
 ```
@@ -112,8 +106,8 @@ Esta es una manera de representar la proporción de lecturas del mismo tipo. Ide
 
 Otra manera de verlo rápidamente:
 
-```{r plot5, echo=TRUE, eval=FALSE}
-ShortRead:::.freqSequences(fqQC, "read", n=1000)
+```{r plot5, echo=TRUE, eval=TRUE}
+ShortRead:::.freqSequences(fqQC, "read", n=10)
 
 #las primeras 1000 secuencias más representadas
 plot(ShortRead:::.freqSequences(fqQC, "read", n=1000)$count)
@@ -121,7 +115,7 @@ plot(ShortRead:::.freqSequences(fqQC, "read", n=1000)$count)
 
 De acuerdo a lo que vimos sobre la tecnologı́a de secuenciación, podemos analizar cómo fue la calidad del _base calling_ ciclo a ciclo.
 
-```{r plot6, echo=TRUE, eval=FALSE}
+```{r plot6, echo=TRUE, eval=TRUE}
 perCycle <- fqQC[["perCycle"]]
 ShortRead:::.plotCycleBaseCall(perCycle$baseCall)
 ShortRead:::.plotCycleQuality(perCycle$quality)
