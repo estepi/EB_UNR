@@ -18,6 +18,15 @@ knitr::opts_chunk$set(echo = FALSE)
 
 Utilizaremos el paquete de R/Bioconductor [ShortRead](http://bioconductor.org/packages/release/bioc/html/ShortRead.html)
 
+Si no está instalado, hay que hacerlo:
+
+
+```{r InstallShortRead, echo=TRUE, eval=FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("ShortRead")
+```
 
 El primer paso que todo bioinformático que trabaja en NGS y recibe archivos fastq del servicio de secuenciación o de un repositorio público, es analizar los archivos para verificar la calidad de los mismos antes de comenzar cualquier análisis. De esta manera podemos identificar rápidamente: 
 
@@ -30,6 +39,18 @@ El primer paso que todo bioinformático que trabaja en NGS y recibe archivos fas
 
 En primer lugar elegimos el directorio de trabajo y ponemos allı́ los archivos FASTQ que descargamos de SRA.
 
+Para ello los vamos a descargar desde SRA usando la herramienta fastq dump
+
+\url{https://github.com/ncbi/sra-tools/wiki/02.-Installing-SRA-Toolkit}
+```{bash fastq, echo=TRUE, eval=FALSE}
+wget --output-document sratoolkit.tar.gz http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz
+```
+
+Luego:
+
+```{bash fastqdump, echo=TRUE, eval=FALSE}
+  fastq-dump --split-e  SRR5264037
+```
 
 Cargamos el paquete al entorno de trabajo. Vamos a analizar la calidad del archivo fastq con una función especial para ello 
 \texttt{qa}

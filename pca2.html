@@ -359,6 +359,11 @@ pre code {
 <div id="control-de-calidad-de-archivos-fastq" class="section level2">
 <h2>Control de Calidad de Archivos FASTQ</h2>
 <p>Utilizaremos el paquete de R/Bioconductor <a href="http://bioconductor.org/packages/release/bioc/html/ShortRead.html">ShortRead</a></p>
+<p>Si no está instalado, hay que hacerlo:</p>
+<pre class="r"><code>if (!require(&quot;BiocManager&quot;, quietly = TRUE))
+    install.packages(&quot;BiocManager&quot;)
+
+BiocManager::install(&quot;ShortRead&quot;)</code></pre>
 <p>El primer paso que todo bioinformático que trabaja en NGS y recibe archivos fastq del servicio de secuenciación o de un repositorio público, es analizar los archivos para verificar la calidad de los mismos antes de comenzar cualquier análisis. De esta manera podemos identificar rápidamente:</p>
 <ul>
 <li><p>el número de lecturas de cada biblioteca</p></li>
@@ -366,6 +371,11 @@ pre code {
 <li><p>la existencia de contaminantes, el tipo de biblioteca que se ha secuenciado (genómico, transcriptómica, amplicones) la calidad promedio de la biblioteca secuenciada.</p></li>
 </ul>
 <p>En primer lugar elegimos el directorio de trabajo y ponemos allı́ los archivos FASTQ que descargamos de SRA.</p>
+<p>Para ello los vamos a descargar desde SRA usando la herramienta fastq dump</p>
+<p></p>
+<pre class="bash"><code>wget --output-document sratoolkit.tar.gz http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz</code></pre>
+<p>Luego:</p>
+<pre class="bash"><code>  fastq-dump --split-e  SRR5264037</code></pre>
 <p>Cargamos el paquete al entorno de trabajo. Vamos a analizar la calidad del archivo fastq con una función especial para ello </p>
 <pre class="r"><code>library(ShortRead)
 setwd(&quot;../data/&quot;)
