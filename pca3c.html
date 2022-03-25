@@ -352,34 +352,95 @@ pre code {
 <h1 class="title toc-ignore">Análisis e Interpretación de datos de RNA-Seq</h1>
 <h3 class="subtitle">Especialización en Bioinformática - UNR</h3>
 <h4 class="author">Estefania Mancini</h4>
-<h4 class="date">28-29 Marzo 2022</h4>
+<h4 class="date">29 de Marzo 2022</h4>
 
 </div>
 
 
-<div id="objetivos" class="section level1">
-<h1>Objetivos</h1>
-<p>El objetivo de este curso es brindar los conocimientos para el análisis de datos de RNA-Seq. Se propone realizar análisis exploratorios de los datos y obtener como resultado final los genes que se consideran diferencialmente expresados en el experimento. Además aprender a hacer reportes con el lenguaje Markdown</p>
-</div>
-<div id="contenidos" class="section level1">
-<h1>Contenidos</h1>
-<div id="dia-1" class="section level2">
-<h2>Dia 1</h2>
+<div id="detección-de-genes-diferencialmente-expresados-en-un-experimento-de-timecourse" class="section level1">
+<h1>Detección de genes diferencialmente expresados en un experimento de timecourse</h1>
+<p>Una vez que tenemos las tablas de conteos hay que realizar el análisis de los datos para buscar aquellos genes que se hayan comportado diferente en las condicones en estudio. En este caso, analizaremos datos de un trabajo cuyo objetivo es analizar el impacto sobre la remodelación del transcriptoma ante el silenciamiento de una proteı́na del spliceosoma (hnRNPC).</p>
+<p>El diseño experimental es una comparación entre <strong>3 condiciones</strong>, con <strong>2 réplicas</strong> biológicas cada una.</p>
+<p>Antes de empezar armamos un archivo <em>targets</em> o <em>mapping file</em> donde se detalla cada muestra a qué condición corresponde</p>
+<pre class="r"><code>targets &lt;- read.table(&quot;targets.txt&quot;, header = T, row.names = 1)</code></pre>
+<p>Ahora cargaremos la tabla de counts a nivel gen. Especificamos algunas opciones tales como cuál es la colunma que le da nombre a las filas <em>(row.names = 1)</em>, así como si los nombres de las columnas. Para saber sobre estas especificaciones puede consultar el help de <em>read.table</em>.</p>
+<pre class="r"><code>counts &lt;-
+    read.table(
+        &quot;genes.hits.txt&quot;,
+        row.names = 1,
+        header = T,
+        stringsAsFactors = F
+    )</code></pre>
+<p>¿Qué tipo de objeto es <strong>counts</strong>? ¿Qué dimensiones tiene? ¿Cómo luce?</p>
+<pre class="r"><code>class(counts)
+dim(counts)
+head(counts)</code></pre>
+<p>Cargamos al entorno el paquete de bioconductor con el que vamos a realizar nuestro primer análisis en busca de genes diferencialmente expresdos:</p>
+<pre class="r"><code>library(edgeR)</code></pre>
+<p>Para explorar un poco la tabla de datos, miremos algunas medidas resumen y la distribucion de los counts:</p>
+<pre class="r"><code>summary(counts)
+plot(density(rowMeans(counts)))</code></pre>
+<p>También podemos explorar usando boxplots de cada una de las muestras para ir conociendo nuestros datos:</p>
+<pre class="r"><code>par(mfrow=c(2,4))
+apply(counts, 2, boxplot)</code></pre>
 <ul>
-<li>Fundamentos de las Tecnologías de secuenciación de última generación</li>
-<li>Repaso R/Bioconductor</li>
-<li><a href="pca1.html">Práctica R</a></li>
-<li><a href="pca2.html">Práctica QC</a></li>
-<li><a href="pca4.html">Markdown</a></li>
+<li>¿Cómo son nuestros datos?</li>
 </ul>
-</div>
-<div id="dia-2" class="section level2">
-<h2>Dia 2</h2>
+<div id="filtros" class="section level2">
+<h2>Filtros</h2>
+<p>Es recomendable filtrar los datos para eliminar aquellas filas (genes) que hayan recibido 0 o pocas lecturas. Para ello, aplicamos una conversión a los counts crudos usando la función cpm, que simplemente divide las lecturas por el total de lecturas de su biblitoeca y multiplica por 1M. Es recomendable remover genes sin al menos 1 read por millon en N de las muestras (donde N será el tamaño del grupo con menor número de réplicas - acá ambos tienen 4). Para estos genes es muy difı́cil detectar expresión diferencial asi que no hay que tener miedo a removerlos.</p>
+<pre class="r"><code>cpms&lt;-cpm(counts)</code></pre>
+<p>Armamos un nuevo objeto y sobre el realizamos el filtro:</p>
+<pre class="r"><code>keep&lt;-rowSums(cpms&gt;1)&gt;4</code></pre>
+<p>¿Qué tipo de vector es <strong>keep</strong>? ¿Para qué voy a utilizarlo? ¿Qué longitud tiene? ¿Cuántos valores son <strong>TRUE</strong>?</p>
+<p>Controlemos la dimensión de la matriz original y filtrada, una vez que subseteamos con el vector <strong>keep</strong>:</p>
+<pre class="r"><code>dim(counts)
+countsf&lt;-counts[keep,]
+dim(countsf)</code></pre>
+<p>Repetimos las medidas resumen y gráficos exploratorios:</p>
+<pre class="r"><code>summary(countsf)</code></pre>
+<p>Ahora si, tenemos la tabla de conteos filtrados. Para comenzar a trabajar creamos un objeto de tipo <strong>DGELis</strong>t que es propio del paquete <strong>edgeR</strong>. tenemos que pasarle los conteos y un vector factorial con las condiciones de cada muestra.</p>
+<p><em>Importante: Hay que chequear que el vector con las condiciones o grupo, coincida con nuestras muestras.</em></p>
+<pre class="r"><code>d&lt;-DGEList(counts=countsf, group=targets$condition)</code></pre>
+<p>Exploremos el objeto. Es un objeto de tipo <em>lista</em>, pero propia de <strong>edgeR</strong>. Cada uno de los componentes en este caso se denomina slot.</p>
+<p>¿Qué información sobre nuestras muestras se ha incorporado en este objeto? La cantidad de lecturas que son contadas por gen son proporcionales a su longitud y a su expresión. Si quisiéramos tener una medida de la expresión absoluta habrı́a que tener en cuenta la longitud. En este análisis estamos concentrados en evaluar las diferencias de expresión entre 2 condiciones. Sólo se tienen en cuenta factores técnicos que deben ser corregidos antes de llevar a cabo el análisis de expresión diferencial.</p>
+<p>*El más influyente es el que se denomina profundidad de la corrida es corregido teniendo en cuenta el tamaño de la biblioteca.</p>
 <ul>
-<li><a href="pca3_install.html">Paquetes</a></li>
-<li><a href="pca3.html">RNA-Seq</a></li>
-<li><a href="pca3b.html">RNA-Seq DESeq2</a></li>
+<li>Otro factor que es importante es la çomposición de la biblioteca: hay genes muy expresados que consumen muchas lecturas causando que los demás genes menos expresados sean subsampleados. Sobre el objeto, calcularemos los factores de normalización. Volver a explorar el objeto original y observar qué cambios se produjeron.</li>
 </ul>
+<pre class="r"><code>d&lt;-calcNormFactors(d)</code></pre>
+<p>Se han agregado los factores de normalización que se usarán al momento de estimar la expresión diferencial. Los mismos son bastante cercanos a 1, lo que significa que las bibliotecas son bastante similares en cuanto al número de lecturas totales.</p>
+<p>Exploramos la relación entre las réplicas en un gráfico de bajas dimensiones (tipo PCA)</p>
+<pre class="r"><code>shortNames&lt;-paste(targets$condition, rep(1:4, 2), sep=&quot;.&quot;)
+targets&lt;-cbind(targets,shortNames)
+
+plotMDS(d, labels=targets$shortNames,
+col=c(&quot;darkgreen&quot;,&quot;blue&quot;)[factor(targets$condition)])</code></pre>
+<p>Esta función calculará las distancias euclı́deas entre cada para de muestras y representará en un gráfico de 2 dimensiones cómo es la relación entre las muestras. Podemos observar si en el experimento la separación entre condiciones es suficientemente robusta y cómo es la relación entre las réplicas.</p>
+<p>Ahora nos queda estimar la dispersión. Primero estimaremos la dispersión común a todas las bibliotecas:</p>
+<pre class="r"><code>d&lt;-estimateCommonDisp(d, verbose=TRUE)</code></pre>
+<p>En este caso la dispersión tiene 2 componentes: la técnica y la biológica. La biológica es la raı́z ccuadrada de la dispersión. Si analizamos como se comporta el Coeficiente de variación Biológica, vemos que es superior a la dispersión común a bajas concentraciones de lecturas. Esto hace que sea más apropiado, establecer una dispersión gen a gen y no utilizar la misma dispersión común para todos.</p>
+<p>Estimamos una dispersión <em>gen por gen</em>:</p>
+<pre class="r"><code>d&lt;-estimateTagwiseDisp(d)</code></pre>
+<p>Y analizar la nube de puntos gráficamente, con la función <strong>plotBCV</strong></p>
+<pre class="r"><code>plotBCV(d)</code></pre>
+<p>Ya estamos en condiciones de testear la expresión diferencial. Para ello <strong>edegR</strong> tiene la función <strong>exactTest</strong>. La misma necesitará la dispersión que acabamos de calcular y el par que queremos comparar. Este es un test que se utiliza para evaluar diferencias entre pares, bajo una distribución binomial negativa. Como resultado del test, obtenemos los <em>pvalues</em> para cada comparación. El resultado del test lo guardamos en un objeto nuevo <strong>de</strong>.</p>
+<pre class="r"><code>de&lt;-exactTest(d, pair=c(&quot;CT&quot;,&quot;KD&quot;))</code></pre>
+<p>Con la función <strong>topTags</strong> se ordenarán los genes por su <em>pvalue</em> corregido, y podemos extraer la cantidad que especifiquemos. Por fines prácticos, NO restringiremos a un número fijo los topTags sino que imprimimos todos los genes.</p>
+<pre class="r"><code>tt &lt;- topTags(de, n=nrow(d))</code></pre>
+<p>Podemos explorar rápidamente cómo se distribuyeron los pvalues:</p>
+<pre class="r"><code>table(tt$table$FDR &lt;0.05)
+hist(tt$table$FDR, breaks=100 )</code></pre>
+<p>Para visualizar cómo es la relación entre los genes, la tasa de cambio y la expresión podemos utilizar un gráfico de <strong>logFC vs counts </strong> que ya habı̀amos utilizado, solo que en este caso vamos a marcar con otro color aquellos que tienen un pvalue corregido 0.1. Estos se denominarán <strong>topTags</strong>:</p>
+<pre class="r"><code>deg&lt;-rownames(tt)[tt$table$FDR &lt;.1]
+plotSmear(d, de.tags=deg)
+abline(h=c(-1,0,1))</code></pre>
+<ul>
+<li><p>En nuestro caso observamos el cociente entre cada uno de los genes y la media de expresion de cada gen (en cpm). ¿Qué observamos? Muchos genes se encuentran sobre la región central, significa que no han cambiado como era esperable. El corte de pvalue y logFC es arbitrario y dependerá del experimento que estemos analizando.</p></li>
+<li><p>Recordar que en el vector <strong>deg</strong> se han guardado los nombres de los genes que consideramos diferencialmente expresados con nuestro criterio. Para exportar los datos a un archivo en formato tabular, simplemente imprimo con el comando:</p></li>
+</ul>
+<pre class="r"><code>write.table() o write.csv():
+write.csv(tt$table, file=&quot;toptags_edgeR.csv&quot;)</code></pre>
 </div>
 </div>
 

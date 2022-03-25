@@ -1,5 +1,6 @@
 ---
 title: "Análisis e Interpretación de datos de RNA-Seq"
+subtitle: "Especialización en Bioinformática - UNR"
 author: "Estefania Mancini"
 date: "28-29 Marzo 2022"
 output:
@@ -33,6 +34,7 @@ Además aprender a hacer reportes con el lenguaje Markdown
 * [Paquetes](pca3_install.html)
 * [RNA-Seq](pca3.html)
 * [RNA-Seq DESeq2](pca3b.html)
+* [RNA-Seq extendida](pca3c.html)
 
 
 
