@@ -19,9 +19,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-# Análisis de un experimento de RNA-Seq
-
-## Alineamiento contra referencia
+# Alineamiento contra referencia
 
 El siguiente paso a realizar es alinear las lecturas contra una referencia. En este punto tenemos muchas alternativas y depende esencialmente:
 
@@ -83,7 +81,7 @@ write.table(file = "genes.hits.txt", hits.ul)
 
 ```
 
-## Detección de genes diferencialmente expresados
+# Detección de genes diferencialmente expresados
 
 Una vez que tenemos las tablas de conteos hay que realizar el análisis de los datos para buscar aquellos genes que se hayan comportado diferente en las condicones en estudio. En este caso, analizaremos datos de un trabajo cuyo objetivo es analizar el impacto sobre la remodelación del transcriptoma ante el silenciamiento de una proteı́na del spliceosoma (hnRNPC).
 
@@ -93,17 +91,15 @@ réplicas** biológicas cada una.
 Antes de empezar armamos un archivo *targets* o *mapping file* donde se detalla cada muestra a qué condición corresponde 
 
 ```{r targets, echo=TRUE, eval=TRUE}
-setwd("~/Documents/UNR/clases/data/HNRPC")
-targets <- read.table("targets.txt", header = T, row.names = 1)
+targets <- read.table("~/Documents/UNR/clases/data/HNRPC/targets.txt", header = T, row.names = 1)
 ```
 
 Ahora cargaremos la tabla de counts a nivel gen. Especificamos algunas opciones tales como cuál es la colunma que le da nombre a las filas _(row.names = 1)_, así como si los nombres de las columnas. Para saber sobre estas especificaciones puede consultar el help de *read.table*.
 
 ```{r readt, echo=TRUE, eval=TRUE}
-setwd("~/Documents/UNR/clases/data/HNRPC")
 counts <-
     read.table(
-        "genes.hits.txt",
+        "~/Documents/UNR/clases/data/HNRPC/genes.hits.txt",
         row.names = 1,
         header = T,
         stringsAsFactors = F
@@ -169,7 +165,7 @@ ggplot(df, aes(x=variable, y=value, fill=variable)) +
 
 * ¿Cómo son nuestros datos?
 
-## Filtros
+# Filtros
 
 Es recomendable filtrar los datos para eliminar aquellas filas (genes) que hayan recibido 0 o pocas lecturas. Para ello, aplicamos una conversión a los counts crudos usando la función cpm, que simplemente divide las lecturas por el total de lecturas de su biblitoeca y multiplica por 1M. Es recomendable remover genes sin al menos 1 read por millon en N de las muestras (donde N será el tamaño del grupo con menor número de réplicas - acá ambos tienen 4). Para estos genes es muy difı́cil detectar expresión diferencial asi que no hay que tener miedo a removerlos.
 
@@ -268,7 +264,7 @@ Y analizar la nube de puntos gráficamente, con la función **plotBCV**
 plotBCV(d)
 ```
 
-## Expresión diferencial
+# Expresión diferencial
 
 Ya estamos en condiciones de testear la expresión diferencial. Para ello **edegR** tiene la función **exactTest**. La misma necesitará la dispersión que acabamos de calcular y el par que queremos comparar. Este es un test que se utiliza para evaluar diferencias entre pares, bajo una distribución binomial negativa. Como resultado del test, obtenemos los _pvalues_ para cada comparación. El resultado del test lo guardamos en un objeto nuevo **de**. 
 
