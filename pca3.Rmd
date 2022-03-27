@@ -169,8 +169,10 @@ ggplot(df, aes(x=variable, y=value, fill=variable)) +
 
 Es recomendable filtrar los datos para eliminar aquellas filas (genes) que hayan recibido 0 o pocas lecturas. Para ello, aplicamos una conversión a los counts crudos usando la función cpm, que simplemente divide las lecturas por el total de lecturas de su biblitoeca y multiplica por 1M. Es recomendable remover genes sin al menos 1 read por millon en N de las muestras (donde N será el tamaño del grupo con menor número de réplicas - acá ambos tienen 4). Para estos genes es muy difı́cil detectar expresión diferencial asi que no hay que tener miedo a removerlos.
 
+_Cuidado porque acá la columna 1 tiene el símbolo del gen_
+
 ```{r filtros, echo=TRUE, eval=TRUE}
-cpms<-cpm(counts)
+cpms<-cpm(counts[,1:ncol(counts)])
 ```
 
 Armamos un nuevo objeto y sobre el realizamos el filtro:

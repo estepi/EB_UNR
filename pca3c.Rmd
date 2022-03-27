@@ -1,5 +1,5 @@
 ---
-title: "Análisis e Interpretación de datos de RNA-Seq _timecourse_"
+title: "Trabajo final"
 subtitle: "Especialización en Bioinformática - UNR"
 author: "Estefania Mancini"
 date: "29 de Marzo 2022"
@@ -15,4 +15,60 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-# Detección de genes diferencialmente expresados en un experimento de timecourse
+# Análisis e Interpretación de datos de RNA-Seq _timecourse_
+
+Armar un reporte Markdown con el análisis de los genes diferencialmente expresados en un  experimento de _timecourse_
+
+_Opcional: Se pueden utilizar datos propios_
+
+##  Metadata 
+
+Investigue sobre el diseño experimental y las principales prgeuntas biológicas del experimento 
+
+\url{https://www.nature.com/articles/s41586-019-0888-x}
+
+Las muestras que han sido seleccionadas puede encontrarlas en el archivo *selector.tsv*
+
+## Tabla de conteos
+
+*En el archivo *geneCountsMmu.tab* encontrará los conteos para cada gen del experimento. 
+
+* El mismo fue preparado usando la salida de alineamiento con STAR v 2.7 contra el genoma Mmu version ...
+
+Cargarlo al entorno de trabajo e inspeccionarlo. Reportar las principales métricas aprendidas
+
+
+## Diseño experimental
+
+Usando el archivo selector.tsv, asigne la condición a cada muestra bajo estudio
+
+* ¿Cómo son nuestros datos?
+
+## Filtros
+
+* Es recomendable filtrar los datos para eliminar aquellas filas (genes) que hayan recibido 0 o pocas lecturas. 
+
+* Aplique un filtro sobre estos datos y explique el criterio del mismo. Repetir las medidas resumen y gráficos exploratorios
+
+## Dispersión y normalización
+
+* Calcule los factores de normalización _¿Cómo son los mismos?_
+
+* Aplique las diferentes estimaciones de dispersión aprendidas y reporte en un gráfico del tipo "*BCV*. _¿Qué puede decir con respecto a la dispersión?_
+
+
+## Réplicas
+
+* Uitlice un gráfico de bajas dimensiones para representar la cercanía de las réplicas usando los genes con más dispersión
+
+_¿Pueden utilizarse las réplicas de este experimento? ¿Hay algún outlier?_
+
+## Estimación de los genes diferencialmente expresados
+
+* Estime los genes diferencialmente expresados usando diferentes formas de comparación
+
+* Graficar los resultados representando con colores los genes sobre expresados y reprimidos
+
+* Realizar un análisis de clustering no supervisado para identificar grupos de genes de comportamiento similar
+
+* Analizar ontologías de aquellos genes cuyo comportamiento ha sido similar

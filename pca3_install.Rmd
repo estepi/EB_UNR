@@ -34,6 +34,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 * [pheatmap](https://cran.r-project.org/)
 
+* [reshape2](https://cran.r-project.org/)
 
 
 ## CPAN:
@@ -42,6 +43,7 @@ knitr::opts_chunk$set(echo = FALSE)
 install.packages("pheatmap")
 install.packages("ggplot2")
 install.packages("ggrepel")
+install.packages("reshape2")
 ```
 
 
