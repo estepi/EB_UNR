@@ -19,24 +19,6 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## Utilizaremos los siguientes  paquetes
-
-* [edgeR](http://bioconductor.org/packages/release/bioc/html/edgeR.html)
-
-* [DESeq2](http://bioconductor.org/packages/release/bioc/html/DESeq2.html)
-
-* [RNAseqData.HNRNPC.bam.chr14](http://bioconductor.org/packages/release/data/experiment/html/RNAseqData.HNRNPC.bam.chr14.html)
-
-* [GenomicRanges](http://bioconductor.org/packages/release/bioc/html/GenomicRanges.html)
-
-* [GenomicFeatures](http://bioconductor.org/packages/release/bioc/html/GenomicFeatures.html)
-
-* [GenomicAlignments](http://bioconductor.org/packages/release/bioc/html/GenomicAlignments.html)
-
-* [ggplot2](https://cran.r-project.org/)
-
-* [pheatmap](https://cran.r-project.org/)
-
 # Análisis de un experimento de RNA-Seq
 
 ## Alineamiento contra referencia
@@ -111,14 +93,14 @@ réplicas** biológicas cada una.
 Antes de empezar armamos un archivo *targets* o *mapping file* donde se detalla cada muestra a qué condición corresponde 
 
 ```{r targets, echo=TRUE, eval=TRUE}
-setwd("~/Documents/BioApps/data/")
+setwd("~/Documents/UNR/clases/data/HNRPC")
 targets <- read.table("targets.txt", header = T, row.names = 1)
 ```
 
 Ahora cargaremos la tabla de counts a nivel gen. Especificamos algunas opciones tales como cuál es la colunma que le da nombre a las filas _(row.names = 1)_, así como si los nombres de las columnas. Para saber sobre estas especificaciones puede consultar el help de *read.table*.
 
 ```{r readt, echo=TRUE, eval=TRUE}
-setwd("~/Documents/BioApps/data/")
+setwd("~/Documents/UNR/clases/data/HNRPC")
 counts <-
     read.table(
         "genes.hits.txt",
@@ -134,7 +116,6 @@ counts <-
 class(counts)
 dim(counts)
 head(counts)
-#knitr::kable(counts[1:5,1:5], format="pandoc", align='cccc')
 ```
 
 
@@ -365,6 +346,7 @@ ii <- match(rownames(tt10), rownames(y))
 y$imp_genes[ii]<-rownames(y)[ii]
 
 library(ggrepel)
+
 ggplot(y, aes(x=logFC, y=-log10(FDR))) +
   geom_point(aes(col=gene_color), cex= 1.2) +
   scale_color_manual(values=c("dark green","dark grey", "dark red")) +

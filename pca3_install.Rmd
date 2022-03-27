@@ -30,12 +30,18 @@ knitr::opts_chunk$set(echo = FALSE)
 
 * [ggplot2](https://cran.r-project.org/)
 
+* [ggrepel](https://cran.r-project.org/)
+
 * [pheatmap](https://cran.r-project.org/)
+
+
 
 ## CPAN:
 
 ```{r installR, echo=TRUE, eval=FALSE}
 install.packages("pheatmap")
+install.packages("ggplot2")
+install.packages("ggrepel")
 ```
 
 
