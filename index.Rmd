@@ -27,7 +27,7 @@ Además aprender a hacer reportes con el lenguaje Markdown
 * Repaso R/Bioconductor
 * [Práctica R](pca1.html) 
 * [Práctica QC](pca2.html)
-* [Markdown](pca4.html)
+* [Markdown](md.html)
 
 ## Dia 2
 * Introducción RNA-Seq

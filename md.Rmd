@@ -1,0 +1,66 @@
+---
+title: "Reportes con Rmarkdown"
+subtitle: "Especialización en Bioinformática - UNR"
+author: "Estefania Mancini"
+date: "29 de Marzo 2022"
+output:
+    html_document:
+    toc: true 
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 6
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Info: 
+
+- [1]{https://rmarkdown.rstudio.com/}
+- [2]{https://es.r4ds.hadley.nz/r-markdown.html}
+
+## Instalamos el paquete:
+
+```{r rmarkdown, echo=TRUE, eval=FALSE}
+install.packages("rmarkdown")
+```
+
+## Consigna:
+
+* Crea un nuevo documento R Markdown con File > New File > R Markdown. Haz click en el icono apropiado de Knit. 
+
+* Crea un nuevo documento R Markdown para cada uno de los formatos que usaremos: HTML o  PDF 
+
+* Crea un nuevo documento R Markdown en PDF para el análisis QC que hemos hecho
+
+## Ejemplo código
+
+* Sin evaluar:
+
+```{r InstallShortRead, echo=TRUE, eval=FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("ShortRead")
+```
+
+* Con evaluación:
+
+```{r ShortRead, echo=TRUE, eval=TRUE, message=FALSE}
+library(ShortRead)
+setwd("~/Documents/UNR/clases/data/QC/")
+countFastq("R1.fq.gz")
+fqQC <-qa("R1.fq.gz")
+```
+
+* Plots 
+```{r plot6, echo=TRUE, eval=TRUE}
+perCycle <- fqQC[["perCycle"]]
+ShortRead:::.plotCycleBaseCall(perCycle$baseCall)
+ShortRead:::.plotCycleQuality(perCycle$quality)
+```
