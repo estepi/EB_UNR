@@ -23,7 +23,7 @@ _Opcional: Se pueden utilizar datos propios_
 
 ##  Metadata 
 
-Investigue sobre el diseño experimental y las principales prgeuntas biológicas del experimento 
+Investigue sobre el diseño experimental y las principales preguntas biológicas del experimento 
 
 \url{https://www.nature.com/articles/s41586-019-0888-x}
 
@@ -31,18 +31,18 @@ Las muestras que han sido seleccionadas puede encontrarlas en el archivo *select
 
 ## Tabla de conteos
 
-*En el archivo *geneCountsMmu.tab* encontrará los conteos para cada gen del experimento. 
+* En el archivo **geneCountsMmu.tab** encontrará los conteos para cada gen del experimento. 
 
-* El mismo fue preparado usando la salida de alineamiento con STAR v 2.7 contra el genoma Mmu version ...
+* El mismo fue preparado usando la salida de alineamiento con STAR  v2.7 contra el genoma Mmu version 10 
 
 Cargarlo al entorno de trabajo e inspeccionarlo. Reportar las principales métricas aprendidas
 
 
 ## Diseño experimental
 
-Usando el archivo selector.tsv, asigne la condición a cada muestra bajo estudio
+Usando el archivo \textbf{selector.tsv}, asigne la condición a cada muestra bajo estudio
 
-* ¿Cómo son nuestros datos?
+* _¿Cómo son nuestros datos?_
 
 ## Filtros
 
@@ -54,7 +54,7 @@ Usando el archivo selector.tsv, asigne la condición a cada muestra bajo estudio
 
 * Calcule los factores de normalización _¿Cómo son los mismos?_
 
-* Aplique las diferentes estimaciones de dispersión aprendidas y reporte en un gráfico del tipo "*BCV*. _¿Qué puede decir con respecto a la dispersión?_
+* Aplique las diferentes estimaciones de dispersión aprendidas y reporte en un gráfico del tipo *BCV*. _¿Qué puede decir con respecto a la dispersión?_
 
 
 ## Réplicas
@@ -69,6 +69,6 @@ _¿Pueden utilizarse las réplicas de este experimento? ¿Hay algún outlier?_
 
 * Graficar los resultados representando con colores los genes sobre expresados y reprimidos
 
-* Realizar un análisis de clustering no supervisado para identificar grupos de genes de comportamiento similar
+* Realizar un análisis de _clustering no supervisado_ (ayuda use el paquete **pheatmap**) para identificar grupos de genes de comportamiento similar
 
 * Analizar ontologías de aquellos genes cuyo comportamiento ha sido similar

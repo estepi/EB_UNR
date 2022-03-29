@@ -1,20 +1,48 @@
-selector <- read.table("~/Documents/UNR/clases/data/mouse/selector.tsv", 
-                       header = F, row.names = 1)
+## ----counts, echo=TRUE, eval=FALSE------------------------------
+ library(RNAseqData.HNRNPC.bam.chr14)
+ library(GenomicRanges)
+ library(GenomicFeatures)
+library(GenomicAlignments)
+ 
+# write.table(targets, "targets.txt", quote = F, sep = "\t")
 
-colnames(selector)
+files = as.character(targets$bam)
+ reads <- lapply(files,
+                 function(x) {
+                   aln <- readGAlignments(x)
+                 })
+ names(reads) <- rownames(targets)
+ 
+ c14 <- makeTxDbFromGFF("~/Documents/UNR/clases/data/HNRPC/chr14.gtf")
+
+feature <- exonsBy(c14, by = "gen")
+ hits <-
+     lapply(reads, function(x) {
+         countOverlaps(feature, x, ignore.strand = TRUE)
+     })
+
+  hits.ul <- do.call(cbind.data.frame, hits)
+
+tarrgets <- read.table("~/Documents/UNR/clases/data/HNRPC/targets.txt", header = T, row.names = 1)
+
+
 counts <-
     read.table(
-        "~/Documents/UNR/clases/data/mouse/STAR/geneCountsMmu.tab",
+        "~/Documents/UNR/clases/data/HNRPC/genes.hits.txt",
         row.names = 1,
         header = T,
         stringsAsFactors = F
     )
 
+
+class(counts)
 dim(counts)
-library(edgeR)
 head(counts)
 
-cpms<-cpm(counts)
+
+library(edgeR)
+
+
 summary(counts)
 plot(density(rowMeans(counts)))
 
@@ -30,80 +58,107 @@ rmeans$color<-rep("gene", nrow(rmeans))
   labs(title="Read density")
 
 
+
+
 library(reshape2) 
-df<- melt(counts)
+ df<- melt(counts)
 ggplot(df, aes(x=variable, y=value, fill=variable)) + 
   geom_boxplot()+
   theme_classic()+
   labs(title="Read distribution")
 
-#hay algun dato raro?
-# como podemos identificarlo?
 
-cpms<-cpm(counts)
-
-
-## ----keep, echo=TRUE, eval=TRUE--------------------------------------
-keep<-rowSums(cpms>1)>6
+## ----filtros, echo=TRUE, eval=TRUE------------------------------
+cpms<-cpm(counts[,1:ncol(counts)])
 
 
-## ----keep2, echo=TRUE, eval=TRUE-------------------------------------
+## ----keep, echo=TRUE, eval=TRUE---------------------------------
+keep<-rowSums(cpms>1)>4
+
+
+## ----keep2, echo=TRUE, eval=TRUE--------------------------------
 dim(counts)
 countsf<-counts[keep,]
 dim(countsf)
+
+
+## ----keep3, echo=TRUE, eval=TRUE--------------------------------
 summary(countsf)
-colnames(counts)
-condition<-factor(rep(c("ENB", "LNB", "NSC"), each=3))
 
-d<-DGEList(counts=counts, group=condition)
-keep <- filterByExpr(d)
-d <- d[keep,,keep.lib.sizes=FALSE]
-d <- calcNormFactors(d)
-d$samples
-design <- model.matrix(~condition)
-d <- estimateDisp(d,design)
-fit <- glmFit(d,design)
-lrt2 <- glmLRT(fit,coef=2)
-topTags(lrt2)
 
-lrt3 <- glmLRT(fit,coef=3)
-topTags(lrt3)
+## ----DGEList1, echo=TRUE, eval=TRUE-----------------------------
+d<-DGEList(counts=countsf, group=targets$condition)
+str(d)
 
-## ----names, echo=TRUE, eval=TRUE-------------------------------------
 
-plotMDS(d, labels=condition,
-col=c("darkgreen","blue","red")[factor(condition)])
+## ----calcNormF, echo=TRUE, eval=TRUE----------------------------
+d<-calcNormFactors(d)
+d
 
+
+## ----names, echo=TRUE, eval=TRUE--------------------------------
+shortNames<-paste(targets$condition, rep(1:4, 2), sep=".")
+targets<-cbind(targets,shortNames)
+
+plotMDS(d, labels=targets$shortNames,
+col=c("darkgreen","blue")[factor(targets$condition)])
+
+
+
+## ----names2, echo=TRUE, eval=TRUE-------------------------------
 d<-estimateCommonDisp(d, verbose=TRUE)
-d<-estimateTagwiseDisp(d)
 
+
+## ----disp, echo=TRUE, eval=TRUE---------------------------------
+d<-estimateTagwiseDisp(d)
+d
+
+
+## ----plotBCV, echo=TRUE, eval=TRUE------------------------------
 plotBCV(d)
 
-deLNB<-exactTest(d, pair=c("ENB","LNB"))
-ttLNB <- topTags(deLNB)
 
-deNSC<-exactTest(d, pair=c("ENB","NSC"))
-ttNSC <- topTags(deNSC, n = nrow(deNSC))
+## ----exactTest, echo=TRUE, eval=TRUE----------------------------
+de<-exactTest(d, pair=c("CT","KD"))
+str(de)
+
+
+
+## ----toptagsDefault, echo=TRUE, eval=TRUE-----------------------
+tt <- topTags(de)
+tt
+
+
+## ----toptags, echo=TRUE, eval=TRUE------------------------------
+tt <- topTags(de, n = nrow(de))
+
+
+## ----toptags2, echo=TRUE, eval=TRUE-----------------------------
+table(tt$table$FDR <0.05)
 
 df <- data.frame(
-  exp="NSC",
-  fdr=ttNSC$table$FDR)
-
-dim(ttNSC)
-
+  exp="KD",
+  fdr=tt$table$FDR)
+# Change colors
 ggplot(df, aes(x=fdr)) + 
 geom_histogram(color="black", fill="white", binwidth=0.01)+
 geom_vline(xintercept=0.05, linetype="dashed")+
 theme_classic()+
 labs(title="FDR distribution")
 
-deg<-rownames(ttNSC)[ttNSC$table$FDR <.05 &   
-                  abs(ttNSC$table$logFC )>1 ]
-plotSmear(deNSC, de.tags=deg)
+
+
+## ----deg, echo=TRUE, eval=TRUE----------------------------------
+deg<-rownames(tt)[tt$table$FDR <.05 &   
+                  abs(tt$table$logFC )>1 ]
+plotSmear(d, de.tags=deg)
 abline(h=c(-1,0,1))
 
-y <-ttNSC$table
-tt10 <- topTags(deNSC, n=20)
+
+
+## ----degGGPLOT, echo=TRUE, eval=TRUE, warning=FALSE-------------
+y <-tt$table
+tt10 <- topTags(de, n=20)
 
 y$gene_color <- rep("grey", nrow(y))
 y$gene_color[y$logFC>1] <-"red"   
@@ -133,38 +188,7 @@ ggplot(y, aes(x=logFC, y=-log10(FDR))) +
                   box.padding = unit(0.25, "lines"),
                   hjust =1,
                   max.overlaps = 50)
-logcpm <- cpm(d, log=TRUE)
-#selecttipnar los top 100 de SD
 
 
-###########################################
 
-library(pheatmap)
-
-fit <- glmFit(d,design)
-lrt <- glmLRT(fit,coef=2:3)
-
-fc<-data.frame(LNB=lrt$table$logFC.conditionLNB,
-                   NSC=lrt$table$logFC.conditionNSC)
-rownames(fc)<-rownames(lrt$table)
-range<-apply(fc, 1, range)
-range
-fcToplot<-fc[sort(range, decreasing = T)[1:50],]
-dim(fcToplot)
-
-paletteLength <- 10
-myColor <- colorRampPalette(c("red", "white", "blue"))(paletteLength)
-myBreaks <- c(seq(min(fcToplot), 0, 
-                  length.out=ceiling(paletteLength/2) + 1), 
-              seq(max(fcToplot)/paletteLength, 
-                   max(fcToplot), 
-                  length.out=floor(paletteLength/2)))
-
-pheatmap(fcToplot, 
-         fontsize_col= 2,
-         fontsize_row=2, 
-         myColor, 
-         breaks=myBreaks,
-         cluster_rows = TRUE,
-         cluster_cols = TRUE)
-#######################################
+  
